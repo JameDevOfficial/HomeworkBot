@@ -10,11 +10,9 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.EventDispatcher;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
-import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.ApplicationCommandData;
-import discord4j.discordjson.json.ApplicationCommandOptionData;
-import discord4j.discordjson.json.ApplicationCommandRequest;
+
 
 public class Bot {
 

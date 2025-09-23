@@ -24,7 +24,7 @@ dependencies {
     // This dependency is used by the application.
     implementation libs.guava
 
-    implementation "com.discord4j:discord4j-core:3.2.9"
+    implementation "com.discord4j:discord4j-core:3.3.0-RC3"
     }
 
 // Apply a specific Java toolchain to ease working on different environments.
