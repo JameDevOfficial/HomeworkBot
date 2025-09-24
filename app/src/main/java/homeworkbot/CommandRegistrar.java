@@ -15,7 +15,7 @@ public class CommandRegistrar {
     public void registerCommands() {
         long applicationId = client.getRestClient().getApplicationId().block();
 
-        //ping
+        //add_homework
         ApplicationCommandRequest addHomeworkCmd = ApplicationCommandRequest.builder()
                 .name("add_homework")
                 .description("Add a homework to the database")
@@ -29,6 +29,8 @@ public class CommandRegistrar {
                         .name("due")
                         .description("d.m(.y)")
                         .type(ApplicationCommandOption.Type.STRING.getValue())
+                        .minLength(3)
+                        .maxLength(10)
                         .required(true)
                         .build())
                 .addOption(ApplicationCommandOptionData.builder()
@@ -42,9 +44,16 @@ public class CommandRegistrar {
                         .description("The subject of the homework")
                         .type(ApplicationCommandOption.Type.STRING.getValue())
                         .required(false)
+                        .addChoice(discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder().name("Math").value("math").build())
+                        .addChoice(discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder().name("English").value("english").build())
+                        .addChoice(discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder().name("Biology").value("biology").build())
+                        .addChoice(discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder().name("Chemistry").value("chemistry").build())
+                        .addChoice(discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder().name("Physics").value("physics").build())
+                        .addChoice(discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder().name("History").value("history").build())
                         .build())
                 .addOption(ApplicationCommandOptionData.builder()
                         .name("for")
+                        
                         .description("Ping @people or @roles with that homework or empty for everyone")
                         .type(ApplicationCommandOption.Type.STRING.getValue())
                         .required(false)
@@ -52,7 +61,7 @@ public class CommandRegistrar {
                 .addOption(ApplicationCommandOptionData.builder()
                         .name("remind")
                         .description("Choose if the bot should remind everyone to do their homework (default: true)")
-                        .type(ApplicationCommandOption.Type.STRING.getValue())
+                        .type(ApplicationCommandOption.Type.BOOLEAN.getValue())
                         .required(false)
                         .build())
                 .build();
