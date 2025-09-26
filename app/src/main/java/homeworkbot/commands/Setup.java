@@ -1,45 +1,133 @@
 package homeworkbot.commands;
 
+import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.entity.channel.ForumChannel;
+import discord4j.core.spec.ForumChannelCreateSpec;
+import discord4j.core.spec.ForumChannelEditSpec;
+import discord4j.core.spec.ForumTagCreateSpec;
+import reactor.core.publisher.Mono;
+
 public class Setup {
-    //create tags
-    //create forum or set forum id
-    //roles and user that can manage homework
-    //
-    public void executeSetup() {
-        String[] tags = {"AM", "D", "E", "SYT", "SEW"};
-        for (String tag : tags) {
-            createTag(tag);
+
+    private final String channelId;
+
+    public Setup(String channelId) {
+        this.channelId = channelId;
+    }
+
+    public Mono<Void> handle(ChatInputInteractionEvent event) {
+        if (event.getCommandName().equals("setup_homework")) {
+            GatewayDiscordClient client = event.getClient();
+            String[] tags = { "AM", "D", "E", "SYT", "SEW" };
+
+            return event
+                .deferReply()
+                .then(getOrCreateHomeworkForum(event, client, "homework"))
+                .flatMap(forumChannel -> createAllTags(forumChannel, tags))
+                .then(
+                    event.editReply(
+                        "Setup completed: Forum and tags configured."
+                    )
+                )
+                .doOnError(error -> {
+                    System.err.println(
+                        "Error in setup command: " + error.getMessage()
+                    );
+                    error.printStackTrace();
+                })
+                .onErrorResume(error ->
+                    event.editReply("Setup failed: " + error.getMessage())
+                )
+                .then();
+        }
+        return Mono.empty(); // don't ack if not our command
+    }
+
+    private Mono<ForumChannel> getOrCreateHomeworkForum(
+        ChatInputInteractionEvent event,
+        GatewayDiscordClient client,
+        String forumName
+    ) {
+        return Mono.justOrEmpty(event.getInteraction().getGuildId()).flatMap(
+            guildId ->
+                client
+                    .getGuildById(guildId)
+                    .flatMap(guild ->
+                        guild
+                            .getChannels()
+                            .filter(channel ->
+                                channel.getName().equalsIgnoreCase(forumName)
+                            )
+                            .ofType(ForumChannel.class)
+                            .next()
+                            .switchIfEmpty(
+                                guild
+                                    .createForumChannel(
+                                        ForumChannelCreateSpec.builder()
+                                            .name(forumName)
+                                            .build()
+                                    )
+                                    .doOnSuccess(forum ->
+                                        System.out.println(
+                                            "Forum created: " + forumName
+                                        )
+                                    )
+                            )
+                    )
+        );
+    }
+
+    private Mono<Void> createAllTags(ForumChannel forum, String[] tagNames) {
+        // Build a complete list of all tags (existing + new ones)
+        var allTags = new java.util.ArrayList<ForumTagCreateSpec>();
+
+        // Add all existing tags
+        for (var tag : forum.getAvailableTags()) {
+            allTags.add(
+                ForumTagCreateSpec.builder().name(tag.getName()).build()
+            );
         }
 
-        String forumId = getOrCreateForum("homework");
+        // Track if we need to add any new tags
+        boolean hasNewTags = false;
 
-        // Example: Assign roles and users that can manage homework
-        String[] managerRoles = {"admin"};
-        String[] managerUsers = {"jamedev"};
-        assignRolesToUsers(managerRoles, managerUsers);
+        // Add new tags that don't already exist
+        for (String tagName : tagNames) {
+            boolean tagExists = forum
+                .getAvailableTags()
+                .stream()
+                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
 
-        System.out.println("Setup completed: Tags, forum, and roles configured.");
-    }
-
-    // Placeholder methods for demonstration
-    private void createTag(String tagName) {
-        
-        System.out.println("Tag created: " + tagName);
-    }
-
-    private String getOrCreateForum(String forumName) {
-        // Implementation to create or get a forum
-        System.out.println("Forum set: " + forumName);
-        return "forumId123";
-    }
-
-    private void assignRolesToUsers(String[] roles, String[] users) {
-        // Implementation to assign roles to users
-        for (String user : users) {
-            for (String role : roles) {
-                System.out.println("Assigned role " + role + " to user " + user);
+            if (!tagExists) {
+                allTags.add(ForumTagCreateSpec.builder().name(tagName).build());
+                System.out.println("Adding tag: " + tagName);
+                hasNewTags = true;
+            } else {
+                System.out.println("Tag already exists: " + tagName);
             }
         }
+
+        // Only edit the forum if we have new tags to add
+        if (hasNewTags) {
+            return forum
+                .edit(
+                    ForumChannelEditSpec.builder()
+                        .availableTags(allTags)
+                        .build()
+                )
+                .doOnSuccess(updatedForum ->
+                    System.out.println("All tags updated successfully")
+                )
+                .doOnError(error ->
+                    System.err.println(
+                        "Error updating forum tags: " + error.getMessage()
+                    )
+                )
+                .then();
+        } else {
+            System.out.println("No new tags to add");
+            return Mono.empty();
+        }
     }
-    
 }
