@@ -14,9 +14,6 @@ import java.util.Map;
 import reactor.core.publisher.Mono;
 
 public class Bot {
-
-    // resolve forum at runtime instead of caching an id
-
     public static void main(String[] args) {
         String token = System.getenv("TOKEN");
         GatewayDiscordClient client = DiscordClientBuilder.create(token)

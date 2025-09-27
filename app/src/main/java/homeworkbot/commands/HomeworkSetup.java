@@ -31,8 +31,6 @@ public class HomeworkSetup {
             "NW",
             "MEDT",
             "ITP",
-            "ETH",
-            "",
         };
 
         return event
@@ -109,20 +107,16 @@ public class HomeworkSetup {
     }
 
     private Mono<Void> createAllTags(ForumChannel forum, String[] tagNames) {
-        // Build a complete list of all tags (existing + new ones)
         var allTags = new java.util.ArrayList<ForumTagCreateSpec>();
 
-        // Add all existing tags
         for (var tag : forum.getAvailableTags()) {
             allTags.add(
                 ForumTagCreateSpec.builder().name(tag.getName()).build()
             );
         }
 
-        // Track if we need to add any new tags
         boolean hasNewTags = false;
 
-        // Add new tags that don't already exist
         for (String tagName : tagNames) {
             boolean tagExists = forum
                 .getAvailableTags()
@@ -138,7 +132,6 @@ public class HomeworkSetup {
             }
         }
 
-        // Only edit the forum if we have new tags to add
         if (hasNewTags) {
             return forum
                 .edit(

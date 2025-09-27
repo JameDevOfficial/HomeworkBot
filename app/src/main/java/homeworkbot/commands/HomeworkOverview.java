@@ -43,11 +43,10 @@ public class HomeworkOverview {
                     });
             })
             .filter(data -> {
-                @SuppressWarnings("unchecked")
+                @SuppressWarnings("unchecked") // not a good solution
                 java.util.List<Snowflake> reactors = (java.util.List<
                         Snowflake
                     >) data[1];
-                ThreadChannel thread = (ThreadChannel) data[0];
 
                 boolean hasReacted = reactors.contains(
                     event.getInteraction().getUser().getId()
@@ -63,8 +62,10 @@ public class HomeworkOverview {
                 }
 
                 EmbedCreateSpec.Builder embedBuilder = EmbedCreateSpec.builder()
-                    .title("HOMEWORK OVERVIEW")
-                    .description("Here are the homework threads:");
+                    .title("Homework Overview ");
+
+                java.util.Map<String, StringBuilder> dateTaskMap =
+                    new java.util.HashMap<>();
 
                 return Flux.fromIterable(unreactedThreads)
                     .flatMap(data -> {
@@ -81,21 +82,26 @@ public class HomeworkOverview {
                                 for (String line : content.split("\n")) {
                                     String lower = line.trim().toLowerCase();
                                     if (lower.startsWith("**description:**")) {
-                                        description = line.substring(15).trim();
+                                        description = line.substring(16).trim();
                                     } else if (lower.startsWith("**due:**")) {
                                         due = line.substring(8).trim();
                                     } else if (
                                         lower.startsWith("**subject:**")
                                     ) {
                                         subject = line.substring(12).trim();
-                                    } else if (lower.startsWith("**for:**")) {}
+                                    }
                                 }
 
-                                // Use thread title as fallback for description
                                 if (
                                     description == null || description.isEmpty()
                                 ) {
-                                    description = thread.getName();
+                                    description = content;
+                                }
+
+                                if (
+                                    description == null || description.isEmpty()
+                                ) {
+                                    description = "No Description";
                                 }
                                 if (due == null || due.isEmpty()) {
                                     due = "No Due Date";
@@ -103,13 +109,6 @@ public class HomeworkOverview {
                                 if (subject == null || subject.isEmpty()) {
                                     subject = "Unknown Subject";
                                 }
-
-                                System.out.println("Parsed Thread:");
-                                System.out.println(
-                                    "Description: " + description
-                                );
-                                System.out.println("Due: " + due);
-                                System.out.println("Subject: " + subject);
 
                                 return new Object[] {
                                     thread,
@@ -134,12 +133,10 @@ public class HomeworkOverview {
                             });
                     })
                     .doOnNext(info -> {
-                        // Ensure embed fields are added for each thread
                         String due = (String) info[1];
                         String description = (String) info[2];
                         String subject = (String) info[3];
 
-                        // Replace null or invalid values with defaults
                         if (due == null || due.isEmpty()) {
                             due = "No Due Date";
                         }
@@ -147,50 +144,98 @@ public class HomeworkOverview {
                             subject = "Unknown Subject";
                         }
 
+                        ThreadChannel thread = (ThreadChannel) info[0];
                         String fieldValue =
-                            "- " + description + " & " + subject;
+                            "```" +
+                            thread.getName() +
+                            " (" +
+                            description +
+                            ")" +
+                            "```";
 
-                        System.out.println(
-                            "Adding to embed: Due=" +
-                            due +
-                            ", Field=" +
-                            fieldValue
-                        );
+                        String fieldKey = due;
 
-                        // Log each field as it is added to the embed
-                        if (due.matches("<t:\\d+:R>")) {
-                            System.out.println(
-                                "Adding Field: ## Relative Due Date, Value: " +
-                                fieldValue
-                            );
-                            embedBuilder.addField(
-                                "## Relative Due Date",
-                                fieldValue,
-                                false
-                            );
+                        if (due.matches("\\d+\\.\\d+\\.\\d+")) {
+                            fieldKey = due;
+                        } else if (due.matches("<t:\\d+:R>")) {
+                            String timestampStr = due.replaceAll("[^\\d]", "");
+                            try {
+                                long seconds = Long.parseLong(timestampStr);
+                                java.time.Instant instant =
+                                    java.time.Instant.ofEpochSecond(seconds);
+                                java.time.ZonedDateTime dateTime =
+                                    instant.atZone(
+                                        java.time.ZoneId.systemDefault()
+                                    );
+                                int day = dateTime.getDayOfMonth();
+                                int month = dateTime.getMonthValue();
+                                int year = dateTime.getYear();
+                                fieldKey = day + "." + month + "." + year;
+                            } catch (Exception e) {
+                                fieldKey = "Invalid Date";
+                            }
                         } else {
-                            System.out.println(
-                                "Adding Field: ## " +
-                                due +
-                                ", Value: " +
-                                fieldValue
-                            );
-                            embedBuilder.addField(
-                                "## " + due,
-                                fieldValue,
-                                false
-                            );
+                            fieldKey = "No Due Date";
                         }
+
+                        StringBuilder sb = dateTaskMap.getOrDefault(
+                            fieldKey,
+                            new StringBuilder()
+                        );
+                        if (sb.length() > 0) {
+                            sb
+                                .append("\n```")
+                                .append(thread.getName())
+                                .append(" (")
+                                .append(description)
+                                .append(")```");
+                        } else {
+                            sb.append(fieldValue);
+                        }
+                        dateTaskMap.put(fieldKey, sb);
                     })
                     .then(
                         Mono.defer(() -> {
-                            // Send the embed
+                            java.util.List<String> sortedKeys =
+                                new java.util.ArrayList<>(dateTaskMap.keySet());
+                            sortedKeys.sort((a, b) -> {
+                                if (a.equals("No Due Date")) return 1;
+                                if (b.equals("No Due Date")) return -1;
+                                try {
+                                    java.text.SimpleDateFormat sdf =
+                                        new java.text.SimpleDateFormat(
+                                            "dd.MM.yyyy"
+                                        );
+                                    java.util.Date dateA = sdf.parse(
+                                        a.contains(".") ? a : a + ".2025"
+                                    );
+                                    java.util.Date dateB = sdf.parse(
+                                        b.contains(".") ? b : b + ".2025"
+                                    );
+                                    return dateA.compareTo(dateB);
+                                } catch (Exception e) {
+                                    return a.compareTo(b);
+                                }
+                            });
+
+                            for (String key : sortedKeys) {
+                                embedBuilder.addField(
+                                    key.matches("\\d+\\.\\d+\\.\\d+")
+                                        ? key
+                                        : "Other",
+                                    dateTaskMap
+                                        .get(key)
+                                        .toString()
+                                        .replace("*", ""),
+                                    false
+                                );
+                            }
                             return event
                                 .reply()
                                 .withEmbeds(embedBuilder.build());
                         })
                     );
             })
-            .then(); // Ensure Mono<Void> is returned
+            .then();
     }
-} // Close class
+}

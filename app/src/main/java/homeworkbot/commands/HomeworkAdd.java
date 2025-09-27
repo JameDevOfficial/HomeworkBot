@@ -11,7 +11,7 @@ import discord4j.core.spec.StartThreadInForumChannelSpec;
 import java.util.Collections;
 import reactor.core.publisher.Mono;
 
-//To implement: https://github.com/Discord4J/Discord4J/blob/master/core/src/test/java/discord4j/core/ExampleForum.java
+//with help of https://github.com/Discord4J/Discord4J/blob/master/core/src/test/java/discord4j/core/ExampleForum.java
 public class HomeworkAdd {
 
     private String tempDue;
@@ -19,7 +19,6 @@ public class HomeworkAdd {
     public Mono<Void> handle(ChatInputInteractionEvent event) {
         GatewayDiscordClient client = event.getClient();
 
-        // Access the subcommand options
         var subcommandOptions = event
             .getOptions()
             .stream()
@@ -87,7 +86,6 @@ public class HomeworkAdd {
             )
             .orElse(null);
 
-        // Continue with the rest of your logic
         if (dueRaw != null) {
             // Match d.m or d.m.y
             java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
@@ -100,14 +98,13 @@ public class HomeworkAdd {
             java.time.LocalDate today = java.time.LocalDate.now();
             if (matcher.group(3) != null) {
                 year = Integer.parseInt(matcher.group(3));
-                if (year < 100) year += 2000; // handle yy as 20yy
+                if (year < 100) year += 2000;
             } else {
                 year = today.getYear();
             }
             java.time.LocalDate date;
             try {
                 date = java.time.LocalDate.of(year, month, day);
-                // If date is before today, use next year
                 if (date.isBefore(today)) {
                 date = java.time.LocalDate.of(year + 1, month, day);
                 }
@@ -148,7 +145,6 @@ public class HomeworkAdd {
                 )
             )
             .flatMap(forum -> {
-                // Try to find tag by subject name
                 Snowflake tagId = null;
                 if (subject != null) {
                     tagId = forum
@@ -173,7 +169,7 @@ public class HomeworkAdd {
                 if (subject != null) {
                     contentBuilder.append("**Subject:** ").append(subject).append("\n");
                 }
-                //contentBuilder.append("Remind: ").append(Boolean.toString(remind));
+                contentBuilder.append("Remind: ").append(Boolean.toString(remind));
 
                 StartThreadInForumChannelSpec.Builder builder =
                     StartThreadInForumChannelSpec.builder()
@@ -191,5 +187,4 @@ public class HomeworkAdd {
             })
             .then(event.reply("Homework posted: " + title));
     }
-    // No constructor/state needed; resolve forum dynamically by name
 }

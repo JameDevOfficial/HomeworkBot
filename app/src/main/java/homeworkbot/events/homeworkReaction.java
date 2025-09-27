@@ -56,13 +56,13 @@ public class HomeworkReaction {
         discord4j.core.object.entity.Guild guild
     ) {
         if (mentionsEveryoneOrHere(message)) {
-            // Avoid calling getMembers() to prevent GUILD_MEMBERS intent error
             System.out.println(
                 "Cannot fetch all members for @everyone/@here without GUILD_MEMBERS intent."
             );
             return java.util.Collections.emptyList();
+        } else if (message.getUserMentionIds().isEmpty()) {
+            return java.util.Collections.emptyList();
         } else {
-            // Only mentioned users, non-bots, with roles
             List<String> mentionedUserIds = message
                 .getUserMentionIds()
                 .stream()
@@ -91,12 +91,16 @@ public class HomeworkReaction {
     }
 
     private void handleReaction(int reactionCount, int mentionedCount, ThreadChannel channel, ReactionAddEvent event) {
+        if (mentionedCount == 0) {
+            System.out.println("No users mentioned. Task will not be closed automatically.");
+            return;
+        }
+
         if (reactionCount >= mentionedCount) {
             channel.edit(ThreadChannelEditSpec.create().withArchived(true)).subscribe();
             System.out.println("Closed task");
-        } 
-        else {
-            //maybe add sth in the future
+        } else {
+            // maybe add something in the future
         }
     }
 
