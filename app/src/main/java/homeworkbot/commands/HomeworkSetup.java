@@ -10,45 +10,53 @@ import discord4j.core.spec.ForumTagCreateSpec;
 import discord4j.discordjson.json.DefaultReactionData;
 import reactor.core.publisher.Mono;
 
-public class Setup {
+public class HomeworkSetup {
 
     private final Runnable postSetup;
 
-    public Setup(Runnable postSetup) {
+    public HomeworkSetup(Runnable postSetup) {
         this.postSetup = postSetup;
     }
 
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        if (event.getCommandName().equals("setup_homework")) {
-            GatewayDiscordClient client = event.getClient();
-            String[] tags = { "AM", "D", "E", "SYT", "SEW", "NWTK", "ITSI", "NW", "MEDT", "ITP", "ETH", "" };
+        GatewayDiscordClient client = event.getClient();
+        String[] tags = {
+            "AM",
+            "D",
+            "E",
+            "SYT",
+            "SEW",
+            "NWTK",
+            "ITSI",
+            "NW",
+            "MEDT",
+            "ITP",
+            "ETH",
+            "",
+        };
 
-            return event
-                .deferReply()
-                .then(getOrCreateHomeworkForum(event, client, "homework"))
-                .flatMap(forumChannel -> createAllTags(forumChannel, tags))
-                .then(
-                    Mono.fromRunnable(() -> {
-                        if (postSetup != null) postSetup.run();
-                    })
-                )
-                .then(
-                    event.editReply(
-                        "Setup completed: Forum and tags configured."
-                    )
-                )
-                .doOnError(error -> {
-                    System.err.println(
-                        "Error in setup command: " + error.getMessage()
-                    );
-                    error.printStackTrace();
+        return event
+            .deferReply()
+            .then(getOrCreateHomeworkForum(event, client, "homework"))
+            .flatMap(forumChannel -> createAllTags(forumChannel, tags))
+            .then(
+                Mono.fromRunnable(() -> {
+                    if (postSetup != null) postSetup.run();
                 })
-                .onErrorResume(error ->
-                    event.editReply("Setup failed: " + error.getMessage())
-                )
-                .then();
-        }
-        return Mono.empty(); // don't ack if not our command
+            )
+            .then(
+                event.editReply("Setup completed: Forum and tags configured.")
+            )
+            .doOnError(error -> {
+                System.err.println(
+                    "Error in setup command: " + error.getMessage()
+                );
+                error.printStackTrace();
+            })
+            .onErrorResume(error ->
+                event.editReply("Setup failed: " + error.getMessage())
+            )
+            .then();
     }
 
     private Mono<ForumChannel> getOrCreateHomeworkForum(

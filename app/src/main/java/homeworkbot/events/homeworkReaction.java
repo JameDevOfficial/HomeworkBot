@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class homeworkReaction {
+public class HomeworkReaction {
 
-    public homeworkReaction() {}
+    public HomeworkReaction() {}
 
     public void handle(ReactionAddEvent event) {
         event

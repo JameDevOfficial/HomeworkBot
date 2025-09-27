@@ -42,22 +42,26 @@ public class Bot {
         eventDispatcher
             .on(ReactionAddEvent.class)
             .subscribe(event -> {
-                homeworkReaction reactionEvent = new homeworkReaction();
+                HomeworkReaction reactionEvent = new HomeworkReaction();
                 reactionEvent.handle(event);
             });
         CommandRegistrar commandRegistrar = new CommandRegistrar(client);
         commandRegistrar.registerCommands();
-        AddHomework addHomework = new AddHomework();
-        Setup setup = new Setup(() -> {
-            // after setup, re-register commands so subject choices include new tags
+        HomeworkAdd homeworkAdd = new HomeworkAdd();
+        HomeworkOverview homeworkOverview = new HomeworkOverview();
+        HomeworkSetup homeworkSetup = new HomeworkSetup(() -> {
             new CommandRegistrar(client).registerCommands();
         });
         client
-            .on(ChatInputInteractionEvent.class, event -> {
-                if (event.getCommandName().equals("add_homework")) {
-                    return addHomework.handle(event);
-                } else if (event.getCommandName().equals("setup_homework")) {
-                    return setup.handle(event);
+                .on(ChatInputInteractionEvent.class, event -> {
+                String subcommand = event.getOptions().isEmpty() ? "" : event.getOptions().get(0).getName();
+                System.out.println(event.getCommandName() + " " + subcommand + " " + event.getCommandType());
+                if (event.getCommandName().equals("homework") && subcommand.equals("add")) {
+                    return homeworkAdd.handle(event);
+                } else if (event.getCommandName().equals("homework") && subcommand.equals("setup")) {
+                    return homeworkSetup.handle(event);
+                } else if (event.getCommandName().equals("homework") && subcommand.equals("overview")) {
+                    return homeworkOverview.handle(event);
                 }
                 return Mono.empty();
             })
