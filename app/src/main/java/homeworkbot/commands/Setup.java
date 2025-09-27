@@ -3,17 +3,20 @@ package homeworkbot.commands;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.entity.channel.ForumChannel;
+import discord4j.core.object.entity.channel.ThreadChannel.AutoArchiveDuration;
+import discord4j.core.object.reaction.DefaultReaction;
 import discord4j.core.spec.ForumChannelCreateSpec;
 import discord4j.core.spec.ForumChannelEditSpec;
 import discord4j.core.spec.ForumTagCreateSpec;
+import discord4j.discordjson.json.DefaultReactionData;
 import reactor.core.publisher.Mono;
 
 public class Setup {
 
-    private final String channelId;
+    private final Runnable postSetup;
 
-    public Setup(String channelId) {
-        this.channelId = channelId;
+    public Setup(Runnable postSetup) {
+        this.postSetup = postSetup;
     }
 
     public Mono<Void> handle(ChatInputInteractionEvent event) {
@@ -25,6 +28,11 @@ public class Setup {
                 .deferReply()
                 .then(getOrCreateHomeworkForum(event, client, "homework"))
                 .flatMap(forumChannel -> createAllTags(forumChannel, tags))
+                .then(
+                    Mono.fromRunnable(() -> {
+                        if (postSetup != null) postSetup.run();
+                    })
+                )
                 .then(
                     event.editReply(
                         "Setup completed: Forum and tags configured."
@@ -56,16 +64,31 @@ public class Setup {
                     .flatMap(guild ->
                         guild
                             .getChannels()
-                            .filter(channel ->
-                                channel.getName().equalsIgnoreCase(forumName)
+                            .filter(
+                                channel ->
+                                    channel instanceof ForumChannel &&
+                                    channel
+                                        .getName()
+                                        .equalsIgnoreCase(forumName)
                             )
-                            .ofType(ForumChannel.class)
+                            .cast(ForumChannel.class)
                             .next()
                             .switchIfEmpty(
                                 guild
                                     .createForumChannel(
                                         ForumChannelCreateSpec.builder()
                                             .name(forumName)
+                                            .defaultAutoArchiveDurationOrNull(
+                                                10080
+                                            ) // DURATION4 is 1440 minutes
+                                            .defaultReactionEmojiOrNull(
+                                                new DefaultReaction(
+                                                    client,
+                                                    DefaultReactionData.builder()
+                                                        .emojiName("✅")
+                                                        .build()
+                                                )
+                                            )
                                             .build()
                                     )
                                     .doOnSuccess(forum ->

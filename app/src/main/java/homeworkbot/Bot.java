@@ -15,22 +15,7 @@ import reactor.core.publisher.Mono;
 
 public class Bot {
 
-    static String channelId;
-
-    // Startup event to automatically get the "homework" channel ID
-    static void fetchHomeworkChannelId(GatewayDiscordClient client) {
-        client
-            .getGuilds()
-            .flatMap(guild -> guild.getChannels())
-            .filter(channel -> "homework".equalsIgnoreCase(channel.getName()))
-            .next()
-            .map(channel -> channel.getId().asString())
-            .doOnNext(id -> {
-                channelId = id;
-                System.out.println("Homework channel ID set to: " + channelId);
-            })
-            .block();
-    }
+    // resolve forum at runtime instead of caching an id
 
     public static void main(String[] args) {
         String token = System.getenv("TOKEN");
@@ -57,16 +42,16 @@ public class Bot {
         eventDispatcher
             .on(ReactionAddEvent.class)
             .subscribe(event -> {
-                homeworkReaction reactionEvent = new homeworkReaction(
-                    channelId
-                );
+                homeworkReaction reactionEvent = new homeworkReaction();
                 reactionEvent.handle(event);
             });
         CommandRegistrar commandRegistrar = new CommandRegistrar(client);
         commandRegistrar.registerCommands();
-        fetchHomeworkChannelId(client);
-        AddHomework addHomework = new AddHomework(channelId);
-        Setup setup = new Setup(channelId);
+        AddHomework addHomework = new AddHomework();
+        Setup setup = new Setup(() -> {
+            // after setup, re-register commands so subject choices include new tags
+            new CommandRegistrar(client).registerCommands();
+        });
         client
             .on(ChatInputInteractionEvent.class, event -> {
                 if (event.getCommandName().equals("add_homework")) {

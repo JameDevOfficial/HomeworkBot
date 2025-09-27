@@ -1,13 +1,18 @@
 package homeworkbot;
 
+import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.object.entity.channel.ForumChannel;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommandRegistrar {
 
     private final GatewayDiscordClient client;
+    private static final long GUILD_ID = 1419672961090322545L;
 
     public CommandRegistrar(GatewayDiscordClient client) {
         this.client = client;
@@ -16,7 +21,44 @@ public class CommandRegistrar {
     public void registerCommands() {
         long applicationId = client.getRestClient().getApplicationId().block();
 
-        //add_homework
+        List<
+            discord4j.discordjson.json.ApplicationCommandOptionChoiceData
+        > tagChoices = new ArrayList<>();
+        client
+            .getGuildById(Snowflake.of(GUILD_ID))
+            .flatMapMany(guild -> guild.getChannels())
+            .filter(
+                channel ->
+                    channel.getName() != null &&
+                    channel.getName().equalsIgnoreCase("homework")
+            )
+            .ofType(ForumChannel.class)
+            .next()
+            .flatMapMany(channel ->
+                reactor.core.publisher.Flux.fromIterable(
+                    channel.getAvailableTags()
+                )
+            )
+            .map(tag ->
+                discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
+                    .name(tag.getName())
+                    .value(tag.getName())
+                    .build()
+            )
+            .collectList()
+            .blockOptional()
+            .ifPresent(tagChoices::addAll);
+
+        var subjectOptionBuilder = ApplicationCommandOptionData.builder()
+            .name("subject")
+            .description("The subject of the homework")
+            .type(ApplicationCommandOption.Type.STRING.getValue())
+            .required(false);
+
+        for (discord4j.discordjson.json.ApplicationCommandOptionChoiceData choice : tagChoices) {
+            subjectOptionBuilder.addChoice(choice);
+        }
+
         ApplicationCommandRequest addHomeworkCmd =
             ApplicationCommandRequest.builder()
                 .name("add_homework")
@@ -47,50 +89,7 @@ public class CommandRegistrar {
                         .required(false)
                         .build()
                 )
-                .addOption(
-                    ApplicationCommandOptionData.builder()
-                        .name("subject")
-                        .description("The subject of the homework")
-                        .type(ApplicationCommandOption.Type.STRING.getValue())
-                        .required(false)
-                        .addChoice(
-                            discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
-                                .name("Math")
-                                .value("math")
-                                .build()
-                        )
-                        .addChoice(
-                            discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
-                                .name("English")
-                                .value("english")
-                                .build()
-                        )
-                        .addChoice(
-                            discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
-                                .name("Biology")
-                                .value("biology")
-                                .build()
-                        )
-                        .addChoice(
-                            discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
-                                .name("Chemistry")
-                                .value("chemistry")
-                                .build()
-                        )
-                        .addChoice(
-                            discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
-                                .name("Physics")
-                                .value("physics")
-                                .build()
-                        )
-                        .addChoice(
-                            discord4j.discordjson.json.ApplicationCommandOptionChoiceData.builder()
-                                .name("History")
-                                .value("history")
-                                .build()
-                        )
-                        .build()
-                )
+                .addOption(subjectOptionBuilder.build())
                 .addOption(
                     ApplicationCommandOptionData.builder()
                         .name("for")
@@ -124,14 +123,14 @@ public class CommandRegistrar {
                     .type(ApplicationCommandOption.Type.BOOLEAN.getValue())
                     .required(false)
                     .build()
-            )   
+            )
             .build();
         client
             .getRestClient()
             .getApplicationService()
             .createGuildApplicationCommand(
                 applicationId,
-                1419672961090322545L,
+                GUILD_ID,
                 addHomeworkCmd
             )
             .subscribe();
@@ -139,11 +138,7 @@ public class CommandRegistrar {
         client
             .getRestClient()
             .getApplicationService()
-            .createGuildApplicationCommand(
-                applicationId,
-                1419672961090322545L,
-                setupCmd
-            )
+            .createGuildApplicationCommand(applicationId, GUILD_ID, setupCmd)
             .subscribe();
     }
 }
