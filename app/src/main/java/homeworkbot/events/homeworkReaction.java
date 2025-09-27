@@ -92,7 +92,7 @@ public class homeworkReaction {
 
     private void handleReaction(int reactionCount, int mentionedCount, ThreadChannel channel, ReactionAddEvent event) {
         if (reactionCount >= mentionedCount) {
-            channel.edit(ThreadChannelEditSpec.create().withArchived(true));
+            channel.edit(ThreadChannelEditSpec.create().withArchived(true)).subscribe();
             System.out.println("Closed task");
         } 
         else {

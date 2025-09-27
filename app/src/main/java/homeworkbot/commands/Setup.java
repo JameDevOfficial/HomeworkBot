@@ -3,7 +3,6 @@ package homeworkbot.commands;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.entity.channel.ForumChannel;
-import discord4j.core.object.entity.channel.ThreadChannel.AutoArchiveDuration;
 import discord4j.core.object.reaction.DefaultReaction;
 import discord4j.core.spec.ForumChannelCreateSpec;
 import discord4j.core.spec.ForumChannelEditSpec;
@@ -22,7 +21,7 @@ public class Setup {
     public Mono<Void> handle(ChatInputInteractionEvent event) {
         if (event.getCommandName().equals("setup_homework")) {
             GatewayDiscordClient client = event.getClient();
-            String[] tags = { "AM", "D", "E", "SYT", "SEW" };
+            String[] tags = { "AM", "D", "E", "SYT", "SEW", "NWTK", "ITSI", "NW", "MEDT", "ITP", "ETH", "" };
 
             return event
                 .deferReply()
