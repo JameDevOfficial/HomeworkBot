@@ -7,6 +7,7 @@ import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.channel.ForumChannel;
 import discord4j.core.object.entity.channel.ThreadChannel;
 import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.rest.util.Color;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -15,39 +16,38 @@ public class HomeworkOverview {
     public Mono<Void> handle(ChatInputInteractionEvent event) {
         GatewayDiscordClient client = event.getClient();
         return Mono.justOrEmpty(event.getInteraction().getGuildId())
-            .flatMapMany((Snowflake guildId) -> {
-                return client
+            .flatMapMany((Snowflake guildId) ->
+                client
                     .getGuildById(guildId)
-                    .flatMapMany(guild -> {
-                        return guild
+                    .flatMapMany(guild ->
+                        guild
                             .getChannels()
                             .filter(channel -> channel instanceof ForumChannel)
                             .cast(ForumChannel.class)
-                            .flatMap(forum -> forum.getActiveThreads());
-                    });
-            })
-            .flatMap(thread -> {
-                return thread
+                            .flatMap(forum -> forum.getActiveThreads())
+                    )
+            )
+            .flatMap(thread ->
+                thread
                     .getLastMessage()
-                    .flatMapMany(message -> {
-                        return message
+                    .flatMapMany(message ->
+                        message
                             .getReactors(Emoji.unicode("✅"))
                             .map(user -> user.getId())
                             .collectList()
-                            .map(reactors -> new Object[] { thread, reactors });
-                    })
-                    .doOnError(error -> {
+                            .map(reactors -> new Object[] { thread, reactors })
+                    )
+                    .doOnError(error ->
                         System.err.println(
                             "Error fetching reactors: " + error.getMessage()
-                        );
-                    });
-            })
+                        )
+                    )
+            )
             .filter(data -> {
-                @SuppressWarnings("unchecked") // not a good solution
+                @SuppressWarnings("unchecked")
                 java.util.List<Snowflake> reactors = (java.util.List<
                         Snowflake
-                    >) data[1];
-
+                    >) ((Object[]) data)[1];
                 boolean hasReacted = reactors.contains(
                     event.getInteraction().getUser().getId()
                 );
@@ -55,17 +55,16 @@ public class HomeworkOverview {
             })
             .collectList()
             .flatMap(unreactedThreads -> {
+                EmbedCreateSpec.Builder embedBuilder = EmbedCreateSpec.builder()
+                    .title("Homework Overview ");
+                java.util.Map<String, StringBuilder> dateTaskMap =
+                    new java.util.HashMap<>();
+
                 if (unreactedThreads.isEmpty()) {
-                    return event.reply(
+                    return event.editReply(
                         "No homework threads found or all are completed!"
                     );
                 }
-
-                EmbedCreateSpec.Builder embedBuilder = EmbedCreateSpec.builder()
-                    .title("Homework Overview ");
-
-                java.util.Map<String, StringBuilder> dateTaskMap =
-                    new java.util.HashMap<>();
 
                 return Flux.fromIterable(unreactedThreads)
                     .flatMap(data -> {
@@ -75,41 +74,30 @@ public class HomeworkOverview {
                             .getMessageById(thread.getId())
                             .map(initialMessage -> {
                                 String content = initialMessage.getContent();
-                                String description = null;
-                                String due = null;
-                                String subject = null;
-
+                                String description = null, due = null, subject =
+                                    null;
                                 for (String line : content.split("\n")) {
                                     String lower = line.trim().toLowerCase();
-                                    if (lower.startsWith("**description:**")) {
-                                        description = line.substring(16).trim();
-                                    } else if (lower.startsWith("**due:**")) {
-                                        due = line.substring(8).trim();
-                                    } else if (
+                                    if (
+                                        lower.startsWith("**description:**")
+                                    ) description = line.substring(16).trim();
+                                    else if (lower.startsWith("**due:**")) due =
+                                        line.substring(8).trim();
+                                    else if (
                                         lower.startsWith("**subject:**")
-                                    ) {
-                                        subject = line.substring(12).trim();
-                                    }
+                                    ) subject = line.substring(12).trim();
                                 }
-
                                 if (
                                     description == null || description.isEmpty()
-                                ) {
-                                    description = content;
-                                }
-
+                                ) description = content;
                                 if (
                                     description == null || description.isEmpty()
-                                ) {
-                                    description = "No Description";
-                                }
-                                if (due == null || due.isEmpty()) {
-                                    due = "No Due Date";
-                                }
-                                if (subject == null || subject.isEmpty()) {
-                                    subject = "Unknown Subject";
-                                }
-
+                                ) description = "No Description";
+                                if (due == null || due.isEmpty()) due =
+                                    "No Due Date";
+                                if (
+                                    subject == null || subject.isEmpty()
+                                ) subject = "Unknown Subject";
                                 return new Object[] {
                                     thread,
                                     due,
@@ -136,28 +124,19 @@ public class HomeworkOverview {
                         String due = (String) info[1];
                         String description = (String) info[2];
                         String subject = (String) info[3];
-
-                        if (due == null || due.isEmpty()) {
-                            due = "No Due Date";
-                        }
-                        if (subject == null || subject.isEmpty()) {
-                            subject = "Unknown Subject";
-                        }
-
+                        if (due == null || due.isEmpty()) due = "No Due Date";
+                        if (subject == null || subject.isEmpty()) subject =
+                            "Unknown Subject";
                         ThreadChannel thread = (ThreadChannel) info[0];
                         String fieldValue =
                             "```" +
                             thread.getName() +
                             " (" +
                             description +
-                            ")" +
-                            "```";
-
+                            ")```";
                         String fieldKey = due;
-
-                        if (due.matches("\\d+\\.\\d+\\.\\d+")) {
-                            fieldKey = due;
-                        } else if (due.matches("<t:\\d+:R>")) {
+                        if (due.matches("\\d+\\.\\d+\\.\\d+")) fieldKey = due;
+                        else if (due.matches("<t:\\d+:R>")) {
                             String timestampStr = due.replaceAll("[^\\d]", "");
                             try {
                                 long seconds = Long.parseLong(timestampStr);
@@ -167,31 +146,25 @@ public class HomeworkOverview {
                                     instant.atZone(
                                         java.time.ZoneId.systemDefault()
                                     );
-                                int day = dateTime.getDayOfMonth();
-                                int month = dateTime.getMonthValue();
-                                int year = dateTime.getYear();
+                                int day = dateTime.getDayOfMonth(), month =
+                                    dateTime.getMonthValue(), year =
+                                    dateTime.getYear();
                                 fieldKey = day + "." + month + "." + year;
                             } catch (Exception e) {
                                 fieldKey = "Invalid Date";
                             }
-                        } else {
-                            fieldKey = "No Due Date";
-                        }
-
+                        } else fieldKey = "No Due Date";
                         StringBuilder sb = dateTaskMap.getOrDefault(
                             fieldKey,
                             new StringBuilder()
                         );
-                        if (sb.length() > 0) {
-                            sb
-                                .append("\n```")
-                                .append(thread.getName())
-                                .append(" (")
-                                .append(description)
-                                .append(")```");
-                        } else {
-                            sb.append(fieldValue);
-                        }
+                        if (sb.length() > 0) sb
+                            .append("\n```")
+                            .append(thread.getName())
+                            .append(" (")
+                            .append(description)
+                            .append(")```");
+                        else sb.append(fieldValue);
                         dateTaskMap.put(fieldKey, sb);
                     })
                     .then(
@@ -217,7 +190,6 @@ public class HomeworkOverview {
                                     return a.compareTo(b);
                                 }
                             });
-
                             for (String key : sortedKeys) {
                                 embedBuilder.addField(
                                     key.matches("\\d+\\.\\d+\\.\\d+")
@@ -229,12 +201,24 @@ public class HomeworkOverview {
                                         .replace("*", ""),
                                     false
                                 );
+                                embedBuilder.color(Color.of(0x00BFFF));
                             }
                             return event
-                                .reply()
+                                .editReply()
                                 .withEmbeds(embedBuilder.build());
                         })
-                    );
+                    )
+                    .onErrorResume(error -> {
+                        error.printStackTrace();
+                        return event.editReply(
+                            "An error occurred while processing the homework overview. Please try again later."
+                        );
+                    });
+            })
+            .onErrorResume(error -> {
+                error.printStackTrace();
+                // Only log error, do not reply again
+                return Mono.empty();
             })
             .then();
     }

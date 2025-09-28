@@ -125,66 +125,61 @@ public class HomeworkAdd {
         return Mono.justOrEmpty(event.getInteraction().getGuildId())
             .flatMap(guildId -> client.getGuildById(guildId))
             .flatMap(guild ->
-                guild
-                    .getChannels()
-                    .filter(
-                        ch ->
-                            ch.getName() != null &&
-                            ch.getName().equalsIgnoreCase("homework")
-                    )
-                    .ofType(ForumChannel.class)
-                    .next()
-            )
-            .switchIfEmpty(
-                Mono.defer(() ->
-                    event
-                        .reply(
-                            "Homework forum not found. Run /setup_homework first."
-                        )
-                        .then(Mono.empty())
+            guild
+                .getChannels()
+                .filter(
+                ch ->
+                    ch.getName() != null &&
+                    ch.getName().equalsIgnoreCase("homework")
                 )
+                .ofType(ForumChannel.class)
+                .next()
             )
             .flatMap(forum -> {
-                Snowflake tagId = null;
-                if (subject != null) {
-                    tagId = forum
-                        .getAvailableTags()
-                        .stream()
-                        .filter(tag -> tag.getName().equalsIgnoreCase(subject))
-                        .findFirst()
-                        .map(discord4j.core.object.entity.ForumTag::getId)
-                        .orElse(null);
-                }
+            if (forum == null) {
+                return event.editReply("Homework forum not found. Run /setup_homework first.").then(Mono.empty());
+            }
+            Snowflake tagId = null;
+            if (subject != null) {
+                tagId = forum
+                .getAvailableTags()
+                .stream()
+                .filter(tag -> tag.getName().equalsIgnoreCase(subject))
+                .findFirst()
+                .map(discord4j.core.object.entity.ForumTag::getId)
+                .orElse(null);
+            }
 
-                StringBuilder contentBuilder = new StringBuilder();
+            StringBuilder contentBuilder = new StringBuilder();
 
-                if (!"No description provided".equals(description)) {
-                    contentBuilder.append("**Description:** ").append(description).append("\n");
-                }
-                contentBuilder.append("**Due:** ").append(tempDue).append("\n");
+            if (!"No description provided".equals(description)) {
+                contentBuilder.append("**Description:** ").append(description).append("\n");
+            }
+            contentBuilder.append("**Due:** ").append(tempDue).append("\n");
 
-                if (forUsers != null) {
-                    contentBuilder.append("**For:** ").append(forUsers).append("\n");
-                }
-                if (subject != null) {
-                    contentBuilder.append("**Subject:** ").append(subject).append("\n");
-                }
-                contentBuilder.append("Remind: ").append(Boolean.toString(remind));
+            if (forUsers != null) {
+                contentBuilder.append("**For:** ").append(forUsers).append("\n");
+            }
+            if (subject != null) {
+                contentBuilder.append("**Subject:** ").append(subject).append("\n");
+            }
+            contentBuilder.append("Remind: ").append(Boolean.toString(remind));
 
-                StartThreadInForumChannelSpec.Builder builder =
-                    StartThreadInForumChannelSpec.builder()
-                        .autoArchiveDuration(AutoArchiveDuration.DURATION4)
-                        .name(title)
-                        .message(
-                            ForumThreadMessageCreateSpec.builder()
-                                .content(contentBuilder.toString())
-                                .build()
-                        );
-                if (tagId != null) {
-                    builder.addAppliedTag(tagId);
-                }
-                return forum.startThread(builder.build());
+            StartThreadInForumChannelSpec.Builder builder =
+                StartThreadInForumChannelSpec.builder()
+                .autoArchiveDuration(AutoArchiveDuration.DURATION4)
+                .name(title)
+                .message(
+                    ForumThreadMessageCreateSpec.builder()
+                    .content(contentBuilder.toString())
+                    .build()
+                );
+            if (tagId != null) {
+                builder.addAppliedTag(tagId);
+            }
+            return forum.startThread(builder.build())
+                .then(event.editReply("Homework posted: " + title));
             })
-            .then(event.reply("Homework posted: " + title));
+            .then();
     }
 }

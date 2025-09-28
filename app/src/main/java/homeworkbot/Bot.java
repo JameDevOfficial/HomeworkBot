@@ -10,12 +10,15 @@ import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.ApplicationCommandData;
 import homeworkbot.commands.*;
 import homeworkbot.events.*;
+import io.github.cdimascio.dotenv.Dotenv;
 import java.util.Map;
 import reactor.core.publisher.Mono;
 
 public class Bot {
+
     public static void main(String[] args) {
-        String token = System.getenv("TOKEN");
+        Dotenv dotenv = Dotenv.configure().load();
+        String token = dotenv.get("TOKEN");
         GatewayDiscordClient client = DiscordClientBuilder.create(token)
             .build()
             .login()
@@ -50,17 +53,84 @@ public class Bot {
             new CommandRegistrar(client).registerCommands();
         });
         client
-                .on(ChatInputInteractionEvent.class, event -> {
-                String subcommand = event.getOptions().isEmpty() ? "" : event.getOptions().get(0).getName();
-                System.out.println(event.getCommandName() + " " + subcommand + " " + event.getCommandType());
-                if (event.getCommandName().equals("homework") && subcommand.equals("add")) {
-                    return homeworkAdd.handle(event);
-                } else if (event.getCommandName().equals("homework") && subcommand.equals("setup")) {
-                    return homeworkSetup.handle(event);
-                } else if (event.getCommandName().equals("homework") && subcommand.equals("overview")) {
-                    return homeworkOverview.handle(event);
-                }
-                return Mono.empty();
+            .on(ChatInputInteractionEvent.class, event -> {
+                long startTime = System.currentTimeMillis();
+
+                return event
+                    .deferReply()
+                    .then(
+                        Mono.defer(() -> {
+                            String subcommand = event.getOptions().isEmpty()
+                                ? ""
+                                : event.getOptions().get(0).getName();
+                            System.out.println(
+                                event.getCommandName() +
+                                " " +
+                                subcommand +
+                                " " +
+                                event.getCommandType()
+                            );
+                            Mono<Void> handlerMono;
+                            if (
+                                event.getCommandName().equals("homework") &&
+                                subcommand.equals("add")
+                            ) {
+                                handlerMono = homeworkAdd.handle(event);
+                            } else if (
+                                event.getCommandName().equals("homework") &&
+                                subcommand.equals("setup")
+                            ) {
+                                handlerMono = homeworkSetup.handle(event);
+                            } else if (
+                                event.getCommandName().equals("homework") &&
+                                subcommand.equals("overview")
+                            ) {
+                                handlerMono = homeworkOverview.handle(event);
+                            }
+                            else if (
+                                event.getCommandName().equals("ping")
+                            ) {
+                                handlerMono = new Ping().handle(event);
+                            } else {
+                                handlerMono = Mono.empty();
+                            }
+                            return handlerMono
+                                .then(
+                                    Mono.defer(() -> {
+                                        long endTime =
+                                            System.currentTimeMillis();
+                                        double seconds =
+                                            (endTime - startTime) / 1000.0;
+                                        return event
+                                            .getReply()
+                                            .flatMap(message -> {
+                                                String currentContent =
+                                                    message.getContent();
+                                                String timingText =
+                                                    "\n-# " + seconds + "s";
+                                                if (
+                                                    currentContent != null &&
+                                                    currentContent
+                                                        .toLowerCase()
+                                                        .contains("homework bot is thinking...")
+                                                ) {
+                                                    return event.editReply(
+                                                        timingText.trim()
+                                                    );
+                                                } else {
+                                                    // Append timing to the existing message
+                                                    System.out.print(currentContent + timingText);
+                                                    return event.editReply(
+                                                        currentContent +
+                                                        timingText
+                                                    );
+                                                }
+                                            });
+                                    })
+                                )
+                                .then();
+                        })
+                    );
             })
             .subscribe();
     }

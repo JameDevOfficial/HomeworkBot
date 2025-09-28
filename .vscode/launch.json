@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Bot",
+            "type": "shell",
+            "command": "./gradlew.bat run",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ],
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Bot",
+            "request": "launch",
+            "mainClass": "homeworkbot.Bot",
+            "projectName": "app"
+        }
+    ]
+}

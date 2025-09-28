@@ -59,92 +59,121 @@ public class CommandRegistrar {
             subjectOptionBuilder.addChoice(choice);
         }
 
-    
-        // Homework Overview command as a subcommand group
-        ApplicationCommandRequest homeworkCmd = ApplicationCommandRequest.builder()
-            .name("homework")
+        ApplicationCommandRequest pingCmd = ApplicationCommandRequest.builder()
+            .name("ping")
             .description("Homework related commands")
-            .addOption(
-            ApplicationCommandOptionData.builder()
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .name("overview")
-                .description("Show an overview of all homework")
-                .build()
-            )
-            .addOption(
-            ApplicationCommandOptionData.builder()
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .name("setup")
-                .description("Setup the homework forum")
-                .addOption(
-                ApplicationCommandOptionData.builder()
-                    .name("custom")
-                    .description("Use custom setup")
-                    .type(ApplicationCommandOption.Type.BOOLEAN.getValue())
-                    .required(false)
-                    .build()
-                )
-                .build()
-            )
-            .addOption(
-            ApplicationCommandOptionData.builder()
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .name("add")
-                .description("Add a homework to the database")
-                .addOption(
-                ApplicationCommandOptionData.builder()
-                    .name("title")
-                    .description("The title of the homework")
-                    .type(ApplicationCommandOption.Type.STRING.getValue())
-                    .required(true)
-                    .build()
-                )
-                .addOption(
-                ApplicationCommandOptionData.builder()
-                    .name("due")
-                    .description("d.m(.y)")
-                    .type(ApplicationCommandOption.Type.STRING.getValue())
-                    .minLength(3)
-                    .maxLength(10)
-                    .required(true)
-                    .build()
-                )
-                .addOption(
-                ApplicationCommandOptionData.builder()
-                    .name("description")
-                    .description("Short description of the homework")
-                    .type(ApplicationCommandOption.Type.STRING.getValue())
-                    .required(false)
-                    .build()
-                )
-                .addOption(subjectOptionBuilder.build())
-                .addOption(
-                ApplicationCommandOptionData.builder()
-                    .name("for")
-                    .description("Ping @people or @roles with that homework or empty for everyone")
-                    .type(ApplicationCommandOption.Type.STRING.getValue())
-                    .required(false)
-                    .build()
-                )
-                .addOption(
-                ApplicationCommandOptionData.builder()
-                    .name("remind")
-                    .description("Choose if the bot should remind everyone to do their homework (default: true)")
-                    .type(ApplicationCommandOption.Type.BOOLEAN.getValue())
-                    .required(false)
-                    .build()
-                )
-                .build()
-            )
             .build();
+        // Homework Overview command as a subcommand group
+        ApplicationCommandRequest homeworkCmd =
+            ApplicationCommandRequest.builder()
+                .name("homework")
+                .description("Homework related commands")
+                .addOption(
+                    ApplicationCommandOptionData.builder()
+                        .type(
+                            ApplicationCommandOption.Type.SUB_COMMAND.getValue()
+                        )
+                        .name("overview")
+                        .description("Show an overview of all homework")
+                        .build()
+                )
+                .addOption(
+                    ApplicationCommandOptionData.builder()
+                        .type(
+                            ApplicationCommandOption.Type.SUB_COMMAND.getValue()
+                        )
+                        .name("setup")
+                        .description("Setup the homework forum")
+                        .addOption(
+                            ApplicationCommandOptionData.builder()
+                                .name("custom")
+                                .description("Use custom setup")
+                                .type(
+                                    ApplicationCommandOption.Type.BOOLEAN.getValue()
+                                )
+                                .required(false)
+                                .build()
+                        )
+                        .build()
+                )
+                .addOption(
+                    ApplicationCommandOptionData.builder()
+                        .type(
+                            ApplicationCommandOption.Type.SUB_COMMAND.getValue()
+                        )
+                        .name("add")
+                        .description("Add a homework to the database")
+                        .addOption(
+                            ApplicationCommandOptionData.builder()
+                                .name("title")
+                                .description("The title of the homework")
+                                .type(
+                                    ApplicationCommandOption.Type.STRING.getValue()
+                                )
+                                .required(true)
+                                .build()
+                        )
+                        .addOption(
+                            ApplicationCommandOptionData.builder()
+                                .name("due")
+                                .description("d.m(.y)")
+                                .type(
+                                    ApplicationCommandOption.Type.STRING.getValue()
+                                )
+                                .minLength(3)
+                                .maxLength(10)
+                                .required(true)
+                                .build()
+                        )
+                        .addOption(
+                            ApplicationCommandOptionData.builder()
+                                .name("description")
+                                .description(
+                                    "Short description of the homework"
+                                )
+                                .type(
+                                    ApplicationCommandOption.Type.STRING.getValue()
+                                )
+                                .required(false)
+                                .build()
+                        )
+                        .addOption(subjectOptionBuilder.build())
+                        .addOption(
+                            ApplicationCommandOptionData.builder()
+                                .name("for")
+                                .description(
+                                    "Ping @people or @roles with that homework or empty for everyone"
+                                )
+                                .type(
+                                    ApplicationCommandOption.Type.STRING.getValue()
+                                )
+                                .required(false)
+                                .build()
+                        )
+                        .addOption(
+                            ApplicationCommandOptionData.builder()
+                                .name("remind")
+                                .description(
+                                    "Choose if the bot should remind everyone to do their homework (default: true)"
+                                )
+                                .type(
+                                    ApplicationCommandOption.Type.BOOLEAN.getValue()
+                                )
+                                .required(false)
+                                .build()
+                        )
+                        .build()
+                )
+                .build();
         client
             .getRestClient()
             .getApplicationService()
-            .createGuildApplicationCommand(
-                applicationId,
-                GUILD_ID,
-                homeworkCmd
-            )
+            .createGuildApplicationCommand(applicationId, GUILD_ID, homeworkCmd)
+            .subscribe();
+        client
+            .getRestClient()
+            .getApplicationService()
+            .createGuildApplicationCommand(applicationId, GUILD_ID, pingCmd)
             .subscribe();
     }
 }
