@@ -3,23 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HomeworkBot</title>
+    <title>HomeworkBot - Discord Bot for Homework Management</title>
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
     <header>
-        <h1>HomeworkBot</h1>
+        <div class="container">
+            <h1>🤖 HomeworkBot</h1>
+            <p class="tagline">Your Discord homework management assistant</p>
+            <p style="color:rgb(163, 163, 163)">(Please note that the website is AI generated)</p>
+        </div>
     </header>
-    <main>
-        <section>
-            <h2>Welcome</h2>
-            <p>This is a basic layout for your HomeworkBot website.</p>
+
+    <nav class="navigation">
+        <div class="container">
+            <a href="#features">Features</a>
+            <a href="#commands">Commands</a>
+            <a href="#examples">Examples</a>
+            <a href="#hosting">Hosting</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Never Miss Another Assignment</h2>
+            <p>HomeworkBot is a powerful Discord bot designed to help students manage homework assignments efficiently. Keep track of deadlines and stay organized with your schoolwork.</p>
+            <div class="cta-buttons">
+                <a href="https://discord.gg/qFkrbK7YB2" class="btn btn-primary" target="_blank">
+                    Join the Discord Server
+                </a>
+                <a href="https://github.com/JameDevOfficial/HomeworkBot" class="btn btn-secondary" target="_blank">
+                    View on GitHub
+                </a>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>📝 Assignment Management</h3>
+                    <p>Add, view, and manage homework assignments</p>
+                </div>
+                <!-- <div class="feature-card">
+                    <h3>⏰ Smart Reminders</h3>
+                    <p>Get notified about upcoming deadlines before it's too late</p>
+                </div> -->
+                <div class="feature-card">
+                    <h3>🏫 Subject Organization</h3>
+                    <p>Organize assignments by subjects and classes</p>
+                </div>
+                <div class="feature-card">
+                    <h3>👥 Team Collaboration</h3>
+                    <p>Share assignments with users and roles</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="commands" class="commands">
+            <h2>Available Commands</h2>
+            <div class="command-list">
+                <div class="command-item">
+                    <code>/homework add [title] [due] [description:optional] [subject:optional] [remind:optional] [for:optional]</code>
+                    <p>Add a new homework assignment</p>
+                </div>
+                <div class="command-item">
+                    <code>/homework overview</code>
+                    <p>View all your current homework assignments</p>
+                </div>
+                <div class="command-item">
+                    <code>/homework setup</code>
+                    <p>Setup a homework forum channel with all tags (not customizable yet)</p>
+                </div>
+                <div class="command-item">
+                    <code>/ping</code>
+                    <p>Ping the bot and get the processing time of the command (Not including network latency!)</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="examples" class="examples">
+            <h2>Bot in Action</h2>
+            <p>Here are some examples of HomeworkBot working in Discord:</p>
+            <div class="image-gallery">
+                <div class="image-item">
+                    <img src="images/image0.png" alt="HomeworkBot Command Example 1">
+                    <p>Overview of current homeworks</p>
+                </div>
+                <div class="image-item">
+                    <img src="images/image1.png" alt="HomeworkBot Command Example 2">
+                    <p>All bot commands</p>
+                </div>
+                <div class="image-item">
+                    <img src="images/image2.png" alt="HomeworkBot Command Example 3">
+                    <p>Adding a new homework</p>
+                </div>
+                <div class="image-item">
+                    <img src="images/image3.png" alt="HomeworkBot Command Example 4">
+                    <p>Forum withc example homeworks</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="hosting" class="hosting">
+            <h2>Hosting Information</h2>
+            <div class="hosting-info">
+                <h3>🌐 Hosted by Wispbyte</h3>
+                <p>HomeworkBot is proudly hosted on <strong>Wispbyte</strong>, ensuring almost 24/7 uptime and fast response times. Wispbyte provides excellent Discord bot hosting services. </p>
+                <p>Please note that it may come to downtimes!</p>
+
+            </div>
+        </section>
+
+        <section class="installation">
+            <h2>Getting Started</h2>
+            <ol>
+                <li>Click the "Join the Discord" button above</li>
+                <li>Start using <code>/homework add</code> to add a homework to the forum channel</li>
+            </ol>
+        </section>
+
+        <section class="support">
+            <h2>Need Help?</h2>
+            <p>If you encounter any issues or have questions about HomeworkBot:</p>
+            <ul>
+                <li>Check the <a href="https://github.com/JameDevOfficial/HomeworkBot#readme" target="_blank">GitHub README</a></li>
+                <li>Open an issue on <a href="https://github.com/JameDevOfficial/HomeworkBot/issues" target="_blank">GitHub</a></li>
+                <li>Leave me a message on slack @JameDev</li>
+            </ul>
         </section>
     </main>
+
     <footer>
-        <p>&copy; 2025 HomeworkBot</p>
+        <div class="container">
+            <p>&copy; 2025 HomeworkBot - Made with ❤️ by JameDev for students everywhere</p>
+            <p>Hosted on Wispbyte | <a href="https://github.com/JameDevOfficial/HomeworkBot" target="_blank">Open Source</a></p>
+            <p>Please note, that this website is AI generated and may contain false informations!</p>
+        </div>
     </footer>
+
     <script src="script.js"></script>
 </body>
 </html>
