@@ -144,7 +144,7 @@ public class HomeworkOverview {
                                     java.time.Instant.ofEpochSecond(seconds);
                                 java.time.ZonedDateTime dateTime =
                                     instant.atZone(
-                                        java.time.ZoneId.systemDefault()
+                                        java.time.ZoneId.of("UTC")
                                     );
                                 int day = dateTime.getDayOfMonth(), month =
                                     dateTime.getMonthValue(), year =
