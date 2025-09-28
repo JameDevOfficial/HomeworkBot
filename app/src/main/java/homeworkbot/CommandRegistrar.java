@@ -61,7 +61,7 @@ public class CommandRegistrar {
 
         ApplicationCommandRequest pingCmd = ApplicationCommandRequest.builder()
             .name("ping")
-            .description("Homework related commands")
+            .description("Ping the bot")
             .build();
         // Homework Overview command as a subcommand group
         ApplicationCommandRequest homeworkCmd =
@@ -86,10 +86,10 @@ public class CommandRegistrar {
                         .description("Setup the homework forum")
                         .addOption(
                             ApplicationCommandOptionData.builder()
-                                .name("custom")
-                                .description("Use custom setup")
+                                .name("name")
+                                .description("The forum name. Default: homework")
                                 .type(
-                                    ApplicationCommandOption.Type.BOOLEAN.getValue()
+                                    ApplicationCommandOption.Type.STRING.getValue()
                                 )
                                 .required(false)
                                 .build()
@@ -142,7 +142,7 @@ public class CommandRegistrar {
                             ApplicationCommandOptionData.builder()
                                 .name("for")
                                 .description(
-                                    "Ping @people or @roles with that homework or empty for everyone"
+                                    "Ping @people (seperated with , ) or @roles with that homework or empty for everyone"
                                 )
                                 .type(
                                     ApplicationCommandOption.Type.STRING.getValue()

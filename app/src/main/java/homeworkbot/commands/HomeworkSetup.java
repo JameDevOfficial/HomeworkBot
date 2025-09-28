@@ -2,12 +2,14 @@ package homeworkbot.commands;
 
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.entity.channel.ForumChannel;
 import discord4j.core.object.reaction.DefaultReaction;
 import discord4j.core.spec.ForumChannelCreateSpec;
 import discord4j.core.spec.ForumChannelEditSpec;
 import discord4j.core.spec.ForumTagCreateSpec;
 import discord4j.discordjson.json.DefaultReactionData;
+import java.util.Collections;
 import reactor.core.publisher.Mono;
 
 public class HomeworkSetup {
@@ -20,9 +22,12 @@ public class HomeworkSetup {
 
     public Mono<Void> handle(ChatInputInteractionEvent event) {
         GatewayDiscordClient client = event.getClient();
-        String[] tags = { "AM", "D", "E", "SYT", "SEW", "NWTK", "ITSI", "NW", "MEDT", "ITP" };
+        var subcommandOptions = event.getOptions().stream().filter(option -> option.getName().equals("setup")).findFirst().map(ApplicationCommandInteractionOption::getOptions).orElse(Collections.emptyList());
 
-        return getOrCreateHomeworkForum(event, client, "homework")
+        String channelName = subcommandOptions.stream().filter(option -> option.getName().equals("name")).findFirst().flatMap(option -> option.getValue()).map(value -> value.asString()).orElse("homework");
+        String[] tags = { "AM", "D", "E", "SYT", "SEW", "NWTK", "ITSI", "NW", "MEDT", "ITP" };
+        System.out.println(channelName);
+        return getOrCreateHomeworkForum(event, client, channelName)
             .flatMap(result -> {
                 if (result.isExisted()) {
                     return event.editReply("Setup skipped: Homework forum already exists.");
